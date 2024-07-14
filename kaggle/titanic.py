@@ -26,7 +26,31 @@ def prepare_data(df):
     df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
     df = pd.get_dummies(df, columns=["Embarked"])
     df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
-    df = df.astype('float32')
+    df = df.astype("float32")
+    return df
+
+def show_plot(history):
+    plt.figure(figsize=(12, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history["loss"], label="Train Loss")
+    plt.plot(history.history["val_loss"], label="Validation Loss")
+    plt.title("Model Loss")
+    plt.ylabel("Loss")
+    plt.xlabel("Epoch")
+    plt.legend(loc="upper right")
+
+    # Plot training & validation accuracy values
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history["accuracy"], label="Train Accuracy")
+    plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
+    plt.title("Model Accuracy")
+    plt.ylabel("Accuracy")
+    plt.xlabel("Epoch")
+    plt.legend(loc="lower right")
+
+    plt.tight_layout()
+    plt.show()
 
 
 train_df = prepare_data(pd.read_csv("train.csv"))
@@ -35,7 +59,7 @@ X = train_df.drop("Survived", axis=1)
 y = train_df["Survived"]
 
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42)
 
 train_dataset = tf.data.Dataset.from_tensor_slices((X_train.values, y_train.values))
 val_dataset = tf.data.Dataset.from_tensor_slices((X_val.values, y_val.values))
@@ -57,37 +81,17 @@ history = model.fit(train_dataset, epochs=50, validation_data=val_dataset)
 
 val_loss, val_acc = model.evaluate(val_dataset)
 
-plt.figure(figsize=(12, 5))
-
-plt.subplot(1, 2, 1)
-plt.plot(history.history['loss'], label='Train Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.title('Model Loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(loc='upper right')
-
-# Plot training & validation accuracy values
-plt.subplot(1, 2, 2)
-plt.plot(history.history['accuracy'], label='Train Accuracy')
-plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-plt.title('Model Accuracy')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(loc='lower right')
-
-plt.tight_layout()
-plt.show()
+show_plot(history)
 
 
-#test part
+# test part
 test_df = prepare_data(pd.read_csv("test.csv"))
 
 missing_cols = set(X_train.columns) - set(test_df.columns)
 for c in missing_cols:
     test_df[c] = 0
 
-test_df = test_df[X_train.columns]    
+test_df = test_df[X_train.columns]
 
 test_dataset = tf.data.Dataset.from_tensor_slices(test_df.values).batch(32)
 
@@ -97,6 +101,6 @@ predictions = predictions.ravel()
 
 ids = pd.read_csv("test.csv")["PassengerId"]
 
-output = pd.DataFrame({'PassengerId': ids, 'Survived': predictions.ravel()})
+output = pd.DataFrame({"PassengerId": ids, "Survived": predictions.ravel()})
 # print(output.head())
-output.to_csv('submission.csv', index=False)
+output.to_csv("submission.csv", index=False)
