@@ -25,7 +25,10 @@ def prepare_data(df):
     # Encode the 'Sex' column manually
     df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
     df = pd.get_dummies(df, columns=["Embarked"])
+
+    # calculate family size
     df["FamilySize"] = df["SibSp"] + df["Parch"] + 1
+
     df = df.astype("float32")
     return df
 
